@@ -1,6 +1,6 @@
 import { Task, TaskStatus } from '@/lib/useTasks';
 import { motion } from 'motion/react';
-import { Hash, ArrowRight, ArrowLeft, Sun } from 'lucide-react';
+import { ArrowLeft, Sun, Circle } from 'lucide-react';
 
 interface Focus14Props {
   tasks: Task[];
@@ -41,34 +41,38 @@ export default function Focus14({ tasks, updateTaskStatus }: Focus14Props) {
                   exit={{ opacity: 0, scale: 0.98 }}
                   transition={{ duration: 0.3 }}
                   key={task.id}
-                  className="group bg-white/80 p-4 rounded-lg border border-[#3A3731]/5 shadow-none hover:border-[#3A3731]/15 transition-colors"
+                  className="group flex items-center p-6 bg-white/50 rounded-[12px] border border-[#3A3731]/5 shadow-none hover:bg-white/80 hover:border-[#3A3731]/15 transition-all duration-300"
                 >
-                  <h4 className="text-[#3A3731] text-[15px] leading-relaxed tracking-wide mb-3">{task.title}</h4>
-                  <div className="flex items-center justify-between">
-                    <div className="flex space-x-1.5">
+                  <div className="mr-5 text-[#7A7772]">
+                    <Circle size={22} strokeWidth={1.5} />
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-[#3A3731] text-[15px] leading-relaxed tracking-wide">{task.title}</h4>
+                    <div className="mt-2 flex items-center space-x-1.5 flex-wrap">
                       {task.tags.slice(0, 2).map(tag => (
                         <span key={tag} className="text-[11px] font-mono border border-[#3A3731]/10 text-[#7A7772] px-1.5 py-0.5 rounded-sm bg-transparent">
                           {tag}
                         </span>
                       ))}
                     </div>
-                    <div className="flex space-x-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <button 
-                        onClick={() => updateTaskStatus(task.id, 'idea')}
-                        className="p-1.5 text-[#7A7772] hover:text-[#3A3731] hover:bg-[#3A3731]/5 rounded-md transition-colors"
-                        title="放回灵感池"
-                      >
-                        <ArrowLeft size={16} strokeWidth={1.5} />
-                      </button>
-                      <button 
-                        onClick={() => updateTaskStatus(task.id, 'today')}
-                        className="px-2 py-1.5 border border-[#3A3731]/15 text-[#3A3731] hover:bg-[#3A3731]/5 rounded-md transition-colors flex items-center active:translate-y-[1px]"
-                        title="放入今日案头"
-                      >
-                        <Sun size={14} className="mr-1.5 opacity-70" strokeWidth={1.5} />
-                        <span className="text-[12px] tracking-wide">今日</span>
-                      </button>
-                    </div>
+                  </div>
+
+                  <div className="ml-3 flex space-x-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <button 
+                      onClick={() => updateTaskStatus(task.id, 'idea')}
+                      className="p-1.5 text-[#7A7772] hover:text-[#3A3731] hover:bg-[#3A3731]/5 rounded-md transition-colors"
+                      title="放回灵感池"
+                    >
+                      <ArrowLeft size={16} strokeWidth={1.5} />
+                    </button>
+                    <button 
+                      onClick={() => updateTaskStatus(task.id, 'today')}
+                      className="p-1.5 text-[#7A7772] hover:text-[#3A3731] hover:bg-[#3A3731]/5 rounded-md transition-colors"
+                      title="放入今日案头"
+                    >
+                      <Sun size={16} strokeWidth={1.5} />
+                    </button>
                   </div>
                 </motion.div>
               ))

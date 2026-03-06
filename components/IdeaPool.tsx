@@ -75,7 +75,7 @@ export default function IdeaPool({ tasks, updateTask, updateTaskStatus, deleteTa
                 exit={{ opacity: 0, scale: 0.98 }}
                 transition={{ duration: 0.3, ease: "easeOut" }}
                 key={task.id}
-                className="group bg-white/70 backdrop-blur-[1px] p-5 rounded-[12px] border border-[#3A3731]/10 shadow-none hover:bg-white/90 transition-colors flex items-start justify-between"
+                className="group bg-white/50 p-6 rounded-[12px] border border-[#3A3731]/5 shadow-none hover:bg-white/80 hover:border-[#3A3731]/15 transition-all duration-300 flex items-start justify-between gap-3"
               >
                 {isEditing ? (
                   <div className="flex-1 space-y-3">
@@ -111,7 +111,7 @@ export default function IdeaPool({ tasks, updateTask, updateTaskStatus, deleteTa
                 ) : (
                   <>
                     <div className="flex-1 pr-4">
-                      <h3 className="text-[16px] text-[#3A3731] font-medium mb-3 leading-relaxed tracking-wide">{task.title}</h3>
+                      <h3 className="text-[15px] text-[#3A3731] mb-4 leading-relaxed tracking-wide">{task.title}</h3>
                       <div className="flex items-center space-x-3">
                         <span className="text-[12px] text-[#7A7772]/70 font-mono tracking-wider">
                           {new Date(task.createdAt).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })}
@@ -125,27 +125,27 @@ export default function IdeaPool({ tasks, updateTask, updateTaskStatus, deleteTa
                       </div>
                     </div>
 
-                    <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="flex items-center space-x-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <button
                         onClick={() => startEditing(task)}
-                        className="p-2 text-[#7A7772] hover:text-[#3A3731] hover:bg-[#3A3731]/5 rounded-md transition-colors"
+                        className="p-1.5 text-[#7A7772] hover:text-[#3A3731] hover:bg-[#3A3731]/5 rounded-md transition-colors"
                         title="编辑"
                       >
                         <PencilLine size={16} strokeWidth={1.5} />
                       </button>
                       <button
                         onClick={() => deleteTask(task.id)}
-                        className="p-2 text-[#7A7772] hover:text-[#3A3731] hover:bg-[#3A3731]/5 rounded-md transition-colors"
+                        className="p-1.5 text-[#7A7772] hover:text-[#3A3731] hover:bg-[#3A3731]/5 rounded-md transition-colors"
                         title="删除"
                       >
                         <Trash2 size={16} strokeWidth={1.5} />
                       </button>
                       <button
                         onClick={() => updateTaskStatus(task.id, 'focus')}
-                        className="flex items-center space-x-1.5 px-3 py-1.5 border border-[#3A3731]/15 bg-transparent text-[#3A3731] hover:bg-[#3A3731]/5 rounded-md text-[13px] tracking-wide transition-colors active:translate-y-[1px]"
+                        className="p-1.5 text-[#7A7772] hover:text-[#3A3731] hover:bg-[#3A3731]/5 rounded-md transition-colors"
+                        title="移入行囊"
                       >
-                        <span>移入行囊</span>
-                        <ArrowRight size={14} strokeWidth={1.5} />
+                        <ArrowRight size={18} strokeWidth={1.5} />
                       </button>
                     </div>
                   </>

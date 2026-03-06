@@ -130,8 +130,8 @@ export default function TodaysDesk({ tasks, updateTask, updateTaskStatus, delete
                       }}
                       exit={{ opacity: 0, x: 40, transition: { duration: 0.4, ease: "easeOut" } }}
                       key={task.id}
-                      className={`group flex items-center p-5 bg-white/70 backdrop-blur-[1px] rounded-[12px] border transition-all duration-500 ${
-                        isCompleting ? 'border-transparent bg-transparent' : 'border-[#3A3731]/10 shadow-none hover:bg-white/90'
+                      className={`group flex items-center p-6 bg-white/50 rounded-[12px] border transition-all duration-300 ${
+                        isCompleting ? 'border-transparent bg-transparent' : 'border-[#3A3731]/5 shadow-none hover:bg-white/80 hover:border-[#3A3731]/15'
                       }`}
                     >
                       {isEditing ? (
@@ -174,7 +174,7 @@ export default function TodaysDesk({ tasks, updateTask, updateTaskStatus, delete
                           </button>
 
                           <div className="flex-1">
-                            <h3 className={`text-[16px] tracking-wide leading-relaxed transition-all duration-500 ${
+                            <h3 className={`text-[15px] tracking-wide leading-relaxed transition-all duration-300 ${
                               isCompleting ? 'text-[#7A7772] line-through decoration-[#7A7772]/50' : 'text-[#3A3731]'
                             }`}>
                               {task.title}
@@ -185,21 +185,21 @@ export default function TodaysDesk({ tasks, updateTask, updateTaskStatus, delete
                             <div className="opacity-0 group-hover:opacity-100 flex items-center space-x-1.5 transition-opacity">
                               <button
                                 onClick={() => startEditing(task)}
-                                className="p-2 text-[#7A7772] hover:text-[#3A3731] hover:bg-[#3A3731]/5 rounded-md transition-colors"
+                                className="p-1.5 text-[#7A7772] hover:text-[#3A3731] hover:bg-[#3A3731]/5 rounded-md transition-colors"
                                 title="编辑"
                               >
                                 <PencilLine size={16} strokeWidth={1.5} />
                               </button>
                               <button
                                 onClick={() => deleteTask(task.id)}
-                                className="p-2 text-[#7A7772] hover:text-[#3A3731] hover:bg-[#3A3731]/5 rounded-md transition-colors"
+                                className="p-1.5 text-[#7A7772] hover:text-[#3A3731] hover:bg-[#3A3731]/5 rounded-md transition-colors"
                                 title="删除"
                               >
                                 <Trash2 size={16} strokeWidth={1.5} />
                               </button>
                               <button
                                 onClick={() => updateTaskStatus(task.id, 'focus')}
-                                className="p-2 text-[#7A7772] hover:text-[#3A3731] hover:bg-[#3A3731]/5 rounded-md transition-all"
+                                className="p-1.5 text-[#7A7772] hover:text-[#3A3731] hover:bg-[#3A3731]/5 rounded-md transition-all"
                                 title="移回行囊"
                               >
                                 <ArrowRight size={18} strokeWidth={1.5} />

@@ -1,20 +1,24 @@
-import { Task } from '@/lib/useTasks';
+import { Task, TaskPatch } from '@/lib/useTasks';
 import { motion } from 'motion/react';
-import { Star, CheckCircle2, MessageSquarePlus } from 'lucide-react';
+import { Star, CheckCircle2, MessageSquarePlus, Trash2, PencilLine } from 'lucide-react';
 import { useState } from 'react';
 
 interface TimeFootprintsProps {
   tasks: Task[];
+  updateTask: (id: string, patch: TaskPatch) => void;
   toggleHighlight: (id: string, note?: string) => void;
+  deleteTask: (id: string) => void;
 }
 
-export default function TimeFootprints({ tasks, toggleHighlight }: TimeFootprintsProps) {
+export default function TimeFootprints({ tasks, updateTask, toggleHighlight, deleteTask }: TimeFootprintsProps) {
   const completedTasks = tasks
     .filter(t => t.status === 'completed' && t.completedAt)
     .sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0));
 
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [taskTitleText, setTaskTitleText] = useState('');
 
   // Group by month
   const groupedTasks: Record<string, Task[]> = {};
@@ -28,9 +32,28 @@ export default function TimeFootprints({ tasks, toggleHighlight }: TimeFootprint
   });
 
   const handleSaveNote = (id: string) => {
-    toggleHighlight(id, noteText);
+    updateTask(id, { highlightNote: noteText.trim() });
     setEditingNoteId(null);
     setNoteText('');
+  };
+
+  const startTaskEditing = (task: Task) => {
+    setEditingTaskId(task.id);
+    setTaskTitleText(task.title);
+  };
+
+  const cancelTaskEditing = () => {
+    setEditingTaskId(null);
+    setTaskTitleText('');
+  };
+
+  const saveTaskTitle = (id: string) => {
+    const title = taskTitleText.trim();
+    if (!title) {
+      return;
+    }
+    updateTask(id, { title });
+    cancelTaskEditing();
   };
 
   return (
@@ -80,25 +103,67 @@ export default function TimeFootprints({ tasks, toggleHighlight }: TimeFootprint
                           <span className="text-[11px] text-[#7A7772] font-mono tracking-wider">
                             {new Date(task.completedAt!).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })}
                           </span>
-                          <button 
-                            onClick={() => {
-                              if (!task.isHighlight) {
-                                toggleHighlight(task.id);
-                              } else {
-                                toggleHighlight(task.id); // Toggle off
-                              }
-                            }}
-                            className={`p-1.5 rounded-md transition-colors ${
-                              task.isHighlight ? 'text-[#7A8B76] bg-[#7A8B76]/10' : 'text-[#7A7772] hover:bg-[#3A3731]/5 opacity-0 group-hover:opacity-100'
-                            }`}
-                          >
-                            <Star size={14} className={task.isHighlight ? 'fill-current' : ''} strokeWidth={1.5} />
-                          </button>
+                          <div className="flex items-center space-x-1">
+                            <button
+                              onClick={() => startTaskEditing(task)}
+                              className={`p-1.5 rounded-md transition-colors ${
+                                task.isHighlight ? 'text-[#7A7772] hover:bg-[#3A3731]/5' : 'text-[#7A7772] hover:bg-[#3A3731]/5 opacity-0 group-hover:opacity-100'
+                              }`}
+                              title="编辑"
+                            >
+                              <PencilLine size={14} strokeWidth={1.5} />
+                            </button>
+                            <button
+                              onClick={() => deleteTask(task.id)}
+                              className={`p-1.5 rounded-md transition-colors ${
+                                task.isHighlight ? 'text-[#7A7772] hover:bg-[#3A3731]/5' : 'text-[#7A7772] hover:bg-[#3A3731]/5 opacity-0 group-hover:opacity-100'
+                              }`}
+                              title="删除"
+                            >
+                              <Trash2 size={14} strokeWidth={1.5} />
+                            </button>
+                            <button
+                              onClick={() => toggleHighlight(task.id)}
+                              className={`p-1.5 rounded-md transition-colors ${
+                                task.isHighlight ? 'text-[#7A8B76] bg-[#7A8B76]/10' : 'text-[#7A7772] hover:bg-[#3A3731]/5 opacity-0 group-hover:opacity-100'
+                              }`}
+                              title={task.isHighlight ? '取消印记' : '标记印记'}
+                            >
+                              <Star size={14} className={task.isHighlight ? 'fill-current' : ''} strokeWidth={1.5} />
+                            </button>
+                          </div>
                         </div>
-                        
-                        <h4 className={`text-[#3A3731] leading-relaxed tracking-wide ${task.isHighlight ? 'text-[16px] font-medium' : 'text-[15px]'}`}>
-                          {task.title}
-                        </h4>
+
+                        {editingTaskId === task.id ? (
+                          <div className="space-y-3">
+                            <input
+                              value={taskTitleText}
+                              onChange={(event) => setTaskTitleText(event.target.value)}
+                              className="w-full bg-transparent border border-[#3A3731]/10 rounded-md p-3 text-[14px] text-[#3A3731] outline-none focus:border-[#7A8B76]/50 focus:ring-1 focus:ring-[#7A8B76]/50 tracking-wide leading-relaxed"
+                              placeholder="任务标题"
+                              autoFocus
+                            />
+                            <div className="flex justify-end space-x-2">
+                              <button
+                                onClick={cancelTaskEditing}
+                                className="text-[13px] text-[#7A7772] px-4 py-2 hover:bg-[#3A3731]/5 rounded-md transition-colors"
+                              >
+                                取消
+                              </button>
+                              <button
+                                onClick={() => saveTaskTitle(task.id)}
+                                disabled={!taskTitleText.trim()}
+                                className="text-[13px] bg-white border border-[#3A3731]/15 text-[#3A3731] px-4 py-2 rounded-md hover:bg-[#3A3731]/5 disabled:opacity-40 transition-colors active:translate-y-[1px]"
+                              >
+                                保存
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <h4 className={`text-[#3A3731] leading-relaxed tracking-wide ${task.isHighlight ? 'text-[16px] font-medium' : 'text-[15px]'}`}>
+                            {task.title}
+                          </h4>
+                        )}
 
                         {/* Highlight Note Section */}
                         {task.isHighlight && (
@@ -137,7 +202,7 @@ export default function TimeFootprints({ tasks, toggleHighlight }: TimeFootprint
                               >
                                 {task.highlightNote ? (
                                   <p className="text-[14px] text-[#5A5752] font-serif italic leading-relaxed tracking-wide">
-                                    "{task.highlightNote}"
+                                    「{task.highlightNote}」
                                   </p>
                                 ) : (
                                   <div className="flex items-center text-[13px] text-[#7A8B76]/70 hover:text-[#7A8B76] transition-colors tracking-wide">

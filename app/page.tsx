@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Inbox, CalendarDays, Sun, History, Plus, Hash } from 'lucide-react';
-import { useTasks, TaskStatus } from '@/lib/useTasks';
+import { useTasks } from '@/lib/useTasks';
 
 // Components
 import Sidebar from '@/components/Sidebar';
@@ -16,10 +15,20 @@ import TimeFootprints from '@/components/TimeFootprints';
 export type ViewType = 'today' | 'focus' | 'idea' | 'history';
 
 export default function App() {
-  const { tasks, addTask, updateTaskStatus, toggleHighlight, deleteTask, isLoaded } = useTasks();
+  const { tasks, addTask, updateTask, updateTaskStatus, toggleHighlight, deleteTask, isLoaded, loadError, saveError } = useTasks();
   const [currentView, setCurrentView] = useState<ViewType>('today');
 
   if (!isLoaded) return null;
+  if (loadError) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-[#F5F3EF] text-[#3A3731]">
+        <div className="max-w-xl text-center space-y-3 px-6">
+          <h2 className="font-serif text-2xl">任务数据加载失败</h2>
+          <p className="text-[#7A7772] text-sm leading-relaxed break-words">{loadError}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#F5F3EF] relative">
@@ -39,6 +48,12 @@ export default function App() {
           <QuickCapture onAdd={addTask} />
         </div>
 
+        {saveError && (
+          <div className="absolute top-24 right-6 z-50 rounded-md border border-red-300 bg-red-50/95 px-4 py-2 text-xs text-red-700">
+            保存失败：{saveError}
+          </div>
+        )}
+
         {/* View Content */}
         <div className="flex-1 overflow-y-auto pt-32 pb-16 px-6 lg:px-16">
           <div className="max-w-4xl mx-auto h-full">
@@ -52,16 +67,31 @@ export default function App() {
                 className="h-full"
               >
                 {currentView === 'today' && (
-                  <TodaysDesk tasks={tasks} updateTaskStatus={updateTaskStatus} />
+                  <TodaysDesk
+                    tasks={tasks}
+                    updateTask={updateTask}
+                    updateTaskStatus={updateTaskStatus}
+                    deleteTask={deleteTask}
+                  />
                 )}
                 {currentView === 'focus' && (
                   <Focus14 tasks={tasks} updateTaskStatus={updateTaskStatus} />
                 )}
                 {currentView === 'idea' && (
-                  <IdeaPool tasks={tasks} updateTaskStatus={updateTaskStatus} deleteTask={deleteTask} />
+                  <IdeaPool
+                    tasks={tasks}
+                    updateTask={updateTask}
+                    updateTaskStatus={updateTaskStatus}
+                    deleteTask={deleteTask}
+                  />
                 )}
                 {currentView === 'history' && (
-                  <TimeFootprints tasks={tasks} toggleHighlight={toggleHighlight} />
+                  <TimeFootprints
+                    tasks={tasks}
+                    updateTask={updateTask}
+                    toggleHighlight={toggleHighlight}
+                    deleteTask={deleteTask}
+                  />
                 )}
               </motion.div>
             </AnimatePresence>

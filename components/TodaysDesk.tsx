@@ -1,11 +1,13 @@
-import { Task, TaskStatus } from '@/lib/useTasks';
+import { Task, TaskPatch, TaskStatus } from '@/lib/useTasks';
 import { motion, AnimatePresence } from 'motion/react';
-import { Circle, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Circle, CheckCircle2, ArrowRight, PencilLine, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 interface TodaysDeskProps {
   tasks: Task[];
+  updateTask: (id: string, patch: TaskPatch) => void;
   updateTaskStatus: (id: string, status: TaskStatus) => void;
+  deleteTask: (id: string) => void;
 }
 
 function MiniCalendar() {
@@ -56,9 +58,11 @@ function MiniCalendar() {
   );
 }
 
-export default function TodaysDesk({ tasks, updateTaskStatus }: TodaysDeskProps) {
+export default function TodaysDesk({ tasks, updateTask, updateTaskStatus, deleteTask }: TodaysDeskProps) {
   const todayTasks = tasks.filter(t => t.status === 'today');
   const [completingId, setCompletingId] = useState<string | null>(null);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [draftTitle, setDraftTitle] = useState('');
 
   const handleComplete = (id: string) => {
     setCompletingId(id);
@@ -67,6 +71,25 @@ export default function TodaysDesk({ tasks, updateTaskStatus }: TodaysDeskProps)
       updateTaskStatus(id, 'completed');
       setCompletingId(null);
     }, 1500);
+  };
+
+  const startEditing = (task: Task) => {
+    setEditingTaskId(task.id);
+    setDraftTitle(task.title);
+  };
+
+  const cancelEditing = () => {
+    setEditingTaskId(null);
+    setDraftTitle('');
+  };
+
+  const saveEditing = (id: string) => {
+    const title = draftTitle.trim();
+    if (!title) {
+      return;
+    }
+    updateTask(id, { title });
+    cancelEditing();
   };
 
   const today = new Date();
@@ -94,6 +117,7 @@ export default function TodaysDesk({ tasks, updateTaskStatus }: TodaysDeskProps)
               <AnimatePresence>
                 {todayTasks.map(task => {
                   const isCompleting = completingId === task.id;
+                  const isEditing = editingTaskId === task.id;
                   
                   return (
                     <motion.div
@@ -110,34 +134,79 @@ export default function TodaysDesk({ tasks, updateTaskStatus }: TodaysDeskProps)
                         isCompleting ? 'border-transparent bg-transparent' : 'border-[#3A3731]/10 shadow-none hover:bg-white/90'
                       }`}
                     >
-                      <button 
-                        onClick={() => handleComplete(task.id)}
-                        disabled={isCompleting}
-                        className="mr-5 text-[#7A7772] hover:text-[#7A8B76] transition-colors disabled:opacity-50"
-                      >
-                        {isCompleting ? (
-                          <CheckCircle2 size={24} className="text-[#7A8B76]" strokeWidth={1.5} />
-                        ) : (
-                          <Circle size={24} strokeWidth={1.5} />
-                        )}
-                      </button>
-                      
-                      <div className="flex-1">
-                        <h3 className={`text-[16px] tracking-wide leading-relaxed transition-all duration-500 ${
-                          isCompleting ? 'text-[#7A7772] line-through decoration-[#7A7772]/50' : 'text-[#3A3731]'
-                        }`}>
-                          {task.title}
-                        </h3>
-                      </div>
+                      {isEditing ? (
+                        <div className="flex-1 space-y-3">
+                          <input
+                            value={draftTitle}
+                            onChange={(event) => setDraftTitle(event.target.value)}
+                            className="w-full bg-white/90 border border-[#3A3731]/15 rounded-md px-3 py-2 text-[15px] text-[#3A3731] outline-none focus:border-[#7A8B76]/50 focus:ring-1 focus:ring-[#7A8B76]/50"
+                            placeholder="任务标题"
+                            autoFocus
+                          />
+                          <div className="flex justify-end space-x-2">
+                            <button
+                              onClick={cancelEditing}
+                              className="text-[13px] text-[#7A7772] px-3 py-1.5 hover:bg-[#3A3731]/5 rounded-md transition-colors"
+                            >
+                              取消
+                            </button>
+                            <button
+                              onClick={() => saveEditing(task.id)}
+                              disabled={!draftTitle.trim()}
+                              className="text-[13px] bg-white border border-[#3A3731]/15 text-[#3A3731] px-3 py-1.5 rounded-md hover:bg-[#3A3731]/5 disabled:opacity-40 transition-colors active:translate-y-[1px]"
+                            >
+                              保存
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => handleComplete(task.id)}
+                            disabled={isCompleting}
+                            className="mr-5 text-[#7A7772] hover:text-[#7A8B76] transition-colors disabled:opacity-50"
+                          >
+                            {isCompleting ? (
+                              <CheckCircle2 size={24} className="text-[#7A8B76]" strokeWidth={1.5} />
+                            ) : (
+                              <Circle size={24} strokeWidth={1.5} />
+                            )}
+                          </button>
 
-                      {!isCompleting && (
-                        <button 
-                          onClick={() => updateTaskStatus(task.id, 'focus')}
-                          className="opacity-0 group-hover:opacity-100 p-2 text-[#7A7772] hover:text-[#3A3731] hover:bg-[#3A3731]/5 rounded-md transition-all"
-                          title="移回行囊"
-                        >
-                          <ArrowRight size={18} strokeWidth={1.5} />
-                        </button>
+                          <div className="flex-1">
+                            <h3 className={`text-[16px] tracking-wide leading-relaxed transition-all duration-500 ${
+                              isCompleting ? 'text-[#7A7772] line-through decoration-[#7A7772]/50' : 'text-[#3A3731]'
+                            }`}>
+                              {task.title}
+                            </h3>
+                          </div>
+
+                          {!isCompleting && (
+                            <div className="opacity-0 group-hover:opacity-100 flex items-center space-x-1.5 transition-opacity">
+                              <button
+                                onClick={() => startEditing(task)}
+                                className="p-2 text-[#7A7772] hover:text-[#3A3731] hover:bg-[#3A3731]/5 rounded-md transition-colors"
+                                title="编辑"
+                              >
+                                <PencilLine size={16} strokeWidth={1.5} />
+                              </button>
+                              <button
+                                onClick={() => deleteTask(task.id)}
+                                className="p-2 text-[#7A7772] hover:text-[#3A3731] hover:bg-[#3A3731]/5 rounded-md transition-colors"
+                                title="删除"
+                              >
+                                <Trash2 size={16} strokeWidth={1.5} />
+                              </button>
+                              <button
+                                onClick={() => updateTaskStatus(task.id, 'focus')}
+                                className="p-2 text-[#7A7772] hover:text-[#3A3731] hover:bg-[#3A3731]/5 rounded-md transition-all"
+                                title="移回行囊"
+                              >
+                                <ArrowRight size={18} strokeWidth={1.5} />
+                              </button>
+                            </div>
+                          )}
+                        </>
                       )}
                     </motion.div>
                   );

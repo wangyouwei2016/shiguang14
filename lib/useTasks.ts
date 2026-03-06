@@ -13,37 +13,126 @@ export interface Task {
   highlightNote?: string;
 }
 
+export type TaskPatch = Partial<Pick<Task, 'title' | 'tags' | 'highlightNote' | 'isHighlight'>>;
+
+interface TasksResponse {
+  tasks?: Task[];
+  error?: string;
+}
+
+const TASKS_ENDPOINT = '/api/tasks';
+const ID_RADIX = 36;
+const ID_START_INDEX = 2;
+const ID_END_INDEX = 9;
+
+function createTaskId(): string {
+  return Math.random().toString(ID_RADIX).substring(ID_START_INDEX, ID_END_INDEX);
+}
+
+function toErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return 'Unknown error';
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === 'AbortError';
+}
+
+async function loadTasksFromServer(): Promise<Task[]> {
+  const response = await fetch(TASKS_ENDPOINT, {
+    method: 'GET',
+    cache: 'no-store',
+  });
+  const payload = (await response.json()) as TasksResponse;
+
+  if (!response.ok) {
+    throw new Error(payload.error ?? 'Failed to load tasks');
+  }
+  if (!Array.isArray(payload.tasks)) {
+    throw new Error('Invalid tasks payload');
+  }
+  return payload.tasks;
+}
+
+async function saveTasksToServer(tasks: Task[], signal: AbortSignal): Promise<void> {
+  const response = await fetch(TASKS_ENDPOINT, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ tasks }),
+    signal,
+  });
+
+  if (response.ok) {
+    return;
+  }
+
+  const payload = (await response.json()) as TasksResponse;
+  throw new Error(payload.error ?? 'Failed to save tasks');
+}
+
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem('shiguang14_tasks');
-    if (saved) {
-      try {
-        setTasks(JSON.parse(saved));
-      } catch (e) {}
-    } else {
-      // Default tasks for demonstration
-      setTasks([
-        { id: '1', title: '阅读《设计心理学》前三章', createdAt: Date.now() - 100000, status: 'today', tags: ['阅读'] },
-        { id: '2', title: '整理上周的灵感笔记', createdAt: Date.now() - 200000, status: 'focus', tags: ['复盘'] },
-        { id: '3', title: '学习 Next.js App Router', createdAt: Date.now() - 300000, status: 'idea', tags: ['编程'] },
-        { id: '4', title: '完成拾光14的UI设计', createdAt: Date.now() - 400000, status: 'completed', completedAt: Date.now() - 50000, tags: ['设计'], isHighlight: true, highlightNote: '极简风格很有挑战，但最终效果很满意！' },
-      ]);
-    }
-    setIsLoaded(true);
+    let isActive = true;
+
+    loadTasksFromServer()
+      .then((loadedTasks) => {
+        if (!isActive) {
+          return;
+        }
+        setTasks(loadedTasks);
+        setLoadError(null);
+        setIsLoaded(true);
+      })
+      .catch((error) => {
+        if (!isActive) {
+          return;
+        }
+        console.error('Failed to load tasks:', error);
+        setLoadError(toErrorMessage(error));
+        setIsLoaded(true);
+      });
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
   useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem('shiguang14_tasks', JSON.stringify(tasks));
+    if (!isLoaded || loadError !== null) {
+      return;
     }
-  }, [tasks, isLoaded]);
+
+    const controller = new AbortController();
+
+    saveTasksToServer(tasks, controller.signal)
+      .then(() => {
+        setSaveError(null);
+      })
+      .catch((error) => {
+        if (isAbortError(error)) {
+          return;
+        }
+        console.error('Failed to save tasks:', error);
+        setSaveError(toErrorMessage(error));
+      });
+
+    return () => {
+      controller.abort();
+    };
+  }, [tasks, isLoaded, loadError]);
 
   const addTask = (title: string, tags: string[] = []) => {
     const newTask: Task = {
-      id: Math.random().toString(36).substring(2, 9),
+      id: createTaskId(),
       title,
       createdAt: Date.now(),
       status: 'idea',
@@ -75,5 +164,14 @@ export function useTasks() {
     setTasks(prev => prev.filter(t => t.id !== id));
   };
 
-  return { tasks, addTask, updateTaskStatus, toggleHighlight, deleteTask, isLoaded };
+  const updateTask = (id: string, patch: TaskPatch) => {
+    setTasks(prev => prev.map(task => {
+      if (task.id !== id) {
+        return task;
+      }
+      return { ...task, ...patch };
+    }));
+  };
+
+  return { tasks, addTask, updateTask, updateTaskStatus, toggleHighlight, deleteTask, isLoaded, loadError, saveError };
 }

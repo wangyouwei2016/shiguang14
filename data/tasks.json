@@ -1,9 +1,26 @@
 [
   {
+    "id": "u5aigmy",
+    "title": "目标注释A验证目标A",
+    "createdAt": 1772786786552,
+    "status": "focus",
+    "tags": [
+      "长期目标"
+    ],
+    "sourceGoalId": "uimy87v"
+  },
+  {
+    "id": "7ew0m0g",
+    "title": "啊啊",
+    "createdAt": 1772785461548,
+    "status": "idea",
+    "tags": []
+  },
+  {
     "id": "0wzwgc8",
     "title": "45提5他",
     "createdAt": 1772764935543,
-    "status": "idea",
+    "status": "focus",
     "tags": []
   },
   {

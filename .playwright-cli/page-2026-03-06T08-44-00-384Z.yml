@@ -1,0 +1,92 @@
+- generic [ref=e1]:
+  - alert [ref=e2]: 拾光 14 | 极简个人成长管理
+  - generic [ref=e3]:
+    - complementary [ref=e4]:
+      - generic [ref=e5]:
+        - heading "拾光 14" [level=1] [ref=e6]
+        - paragraph [ref=e7]: Focus & Grow
+      - navigation [ref=e8]:
+        - button "今日案头" [ref=e9]:
+          - generic [ref=e11]:
+            - img [ref=e12]
+            - generic [ref=e18]: 今日案头
+        - button "14天行囊" [ref=e19]:
+          - generic [ref=e20]:
+            - img [ref=e21]
+            - generic [ref=e23]: 14天行囊
+        - button "灵感池" [active] [ref=e24]:
+          - generic [ref=e25]:
+            - img [ref=e26]
+            - generic [ref=e29]: 灵感池
+        - button "时光印记" [ref=e30]:
+          - generic [ref=e31]:
+            - img [ref=e32]
+            - generic [ref=e36]: 时光印记
+    - main [ref=e37]:
+      - generic [ref=e39]:
+        - img [ref=e41]
+        - 'textbox "记录闪念... (使用 # 添加标签)" [ref=e42]'
+        - button [disabled] [ref=e43]:
+          - img [ref=e44]
+      - generic [ref=e119]:
+        - generic [ref=e120]:
+          - heading "灵感池" [level=2] [ref=e121]
+          - paragraph [ref=e122]: 清空大脑，把所有未加工的想法存放在这里。
+        - generic [ref=e123]:
+          - generic [ref=e124]:
+            - heading "目标管理" [level=3] [ref=e126]:
+              - img [ref=e127]
+              - text: 目标管理
+            - generic [ref=e131]:
+              - textbox "新增目标标题" [ref=e132]
+              - textbox "目标注释（可选）" [ref=e133]
+              - generic [ref=e134]:
+                - combobox [ref=e135]:
+                  - option "长期目标"
+                  - option "中期目标"
+                  - option "短期目标" [selected]
+                - button "添加目标" [disabled] [ref=e136]:
+                  - img [ref=e137]
+                  - text: 添加目标
+            - generic [ref=e138]:
+              - generic [ref=e139]:
+                - generic [ref=e140]:
+                  - heading "长期目标" [level=4] [ref=e141]
+                  - generic [ref=e142]: "0"
+                - generic [ref=e143]: 暂无长期目标
+              - generic [ref=e144]:
+                - generic [ref=e145]:
+                  - heading "中期目标" [level=4] [ref=e146]
+                  - generic [ref=e147]: "0"
+                - generic [ref=e148]: 暂无中期目标
+              - generic [ref=e149]:
+                - generic [ref=e150]:
+                  - heading "短期目标" [level=4] [ref=e151]
+                  - generic [ref=e152]: "0"
+                - generic [ref=e153]: 暂无短期目标
+          - generic [ref=e154]:
+            - generic [ref=e155]:
+              - heading "灵感任务" [level=3] [ref=e156]
+              - generic [ref=e157]: "2"
+            - generic [ref=e158]:
+              - generic [ref=e159]:
+                - heading "啊啊" [level=3] [ref=e160]
+                - generic [ref=e162]: 3月6日
+              - generic [ref=e163]:
+                - button "编辑" [ref=e164]:
+                  - img [ref=e165]
+                - button "删除" [ref=e168]:
+                  - img [ref=e169]
+                - button "移入行囊" [ref=e172]:
+                  - img [ref=e173]
+            - generic [ref=e175]:
+              - generic [ref=e176]:
+                - heading "让任何和" [level=3] [ref=e177]
+                - generic [ref=e179]: 3月6日
+              - generic [ref=e180]:
+                - button "编辑" [ref=e181]:
+                  - img [ref=e182]
+                - button "删除" [ref=e185]:
+                  - img [ref=e186]
+                - button "移入行囊" [ref=e189]:
+                  - img [ref=e190]

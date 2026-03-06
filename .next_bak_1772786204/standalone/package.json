@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@bifrost_inc/superclaude": "^4.0.7",
+    "ccusage": "^17.1.5"
+  }
+}

@@ -11,9 +11,15 @@ export interface Task {
   completedAt?: number;
   isHighlight?: boolean;
   highlightNote?: string;
+  sourceGoalId?: string;
 }
 
 export type TaskPatch = Partial<Pick<Task, 'title' | 'tags' | 'highlightNote' | 'isHighlight'>>;
+
+interface AddTaskOptions {
+  status?: TaskStatus;
+  sourceGoalId?: string;
+}
 
 interface TasksResponse {
   tasks?: Task[];
@@ -27,6 +33,22 @@ const ID_END_INDEX = 9;
 
 function createTaskId(): string {
   return Math.random().toString(ID_RADIX).substring(ID_START_INDEX, ID_END_INDEX);
+}
+
+function buildTask(title: string, tags: string[], options: AddTaskOptions): Task {
+  const status = options.status ?? 'idea';
+  const task: Task = {
+    id: createTaskId(),
+    title,
+    createdAt: Date.now(),
+    status,
+    tags,
+    sourceGoalId: options.sourceGoalId,
+  };
+  if (status === 'completed') {
+    task.completedAt = Date.now();
+  }
+  return task;
 }
 
 function toErrorMessage(error: unknown): string {
@@ -130,15 +152,8 @@ export function useTasks() {
     };
   }, [tasks, isLoaded, loadError]);
 
-  const addTask = (title: string, tags: string[] = []) => {
-    const newTask: Task = {
-      id: createTaskId(),
-      title,
-      createdAt: Date.now(),
-      status: 'idea',
-      tags,
-    };
-    setTasks(prev => [newTask, ...prev]);
+  const addTask = (title: string, tags: string[] = [], options: AddTaskOptions = {}) => {
+    setTasks(prev => [buildTask(title, tags, options), ...prev]);
   };
 
   const updateTaskStatus = (id: string, status: TaskStatus) => {
@@ -164,6 +179,10 @@ export function useTasks() {
     setTasks(prev => prev.filter(t => t.id !== id));
   };
 
+  const deleteTasksByGoalId = (goalId: string) => {
+    setTasks(prev => prev.filter(task => task.sourceGoalId !== goalId));
+  };
+
   const updateTask = (id: string, patch: TaskPatch) => {
     setTasks(prev => prev.map(task => {
       if (task.id !== id) {
@@ -173,5 +192,26 @@ export function useTasks() {
     }));
   };
 
-  return { tasks, addTask, updateTask, updateTaskStatus, toggleHighlight, deleteTask, isLoaded, loadError, saveError };
+  const updateTasksByGoalId = (goalId: string, patch: TaskPatch) => {
+    setTasks(prev => prev.map(task => {
+      if (task.sourceGoalId !== goalId) {
+        return task;
+      }
+      return { ...task, ...patch };
+    }));
+  };
+
+  return {
+    tasks,
+    addTask,
+    updateTask,
+    updateTaskStatus,
+    updateTasksByGoalId,
+    toggleHighlight,
+    deleteTask,
+    deleteTasksByGoalId,
+    isLoaded,
+    loadError,
+    saveError,
+  };
 }

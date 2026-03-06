@@ -1,0 +1,6 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/api/tasks/route": "/api/tasks",
+  "/api/goals/route": "/api/goals",
+  "/page": "/"
+}

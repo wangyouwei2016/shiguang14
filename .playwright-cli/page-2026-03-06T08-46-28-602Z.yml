@@ -1,0 +1,75 @@
+- generic [ref=e1]:
+  - alert [ref=e2]: 拾光 14 | 极简个人成长管理
+  - generic [ref=e3]:
+    - complementary [ref=e4]:
+      - generic [ref=e5]:
+        - heading "拾光 14" [level=1] [ref=e6]
+        - paragraph [ref=e7]: Focus & Grow
+      - navigation [ref=e8]:
+        - button "今日案头" [ref=e9]:
+          - generic [ref=e11]:
+            - img [ref=e12]
+            - generic [ref=e18]: 今日案头
+        - button "14天行囊" [active] [ref=e19]:
+          - generic [ref=e20]:
+            - img [ref=e21]
+            - generic [ref=e23]: 14天行囊
+        - button "灵感池" [ref=e24]:
+          - generic [ref=e25]:
+            - img [ref=e26]
+            - generic [ref=e29]: 灵感池
+        - button "时光印记" [ref=e30]:
+          - generic [ref=e31]:
+            - img [ref=e32]
+            - generic [ref=e36]: 时光印记
+    - main [ref=e37]:
+      - generic [ref=e39]:
+        - img [ref=e41]
+        - 'textbox "记录闪念... (使用 # 添加标签)" [ref=e42]'
+        - button [disabled] [ref=e43]:
+          - img [ref=e44]
+      - generic [ref=e211]:
+        - generic [ref=e212]:
+          - heading "14 天行囊" [level=2] [ref=e213]
+          - paragraph [ref=e214]: 挑选两周内能完成的任务，小步快跑。
+        - generic [ref=e215]:
+          - generic [ref=e216]:
+            - heading "当前行囊 (3)" [level=3] [ref=e218]: 当前行囊 (3)
+            - generic [ref=e220]:
+              - generic [ref=e221]:
+                - img [ref=e223]
+                - generic [ref=e225]:
+                  - heading "目标注释A验证目标A" [level=4] [ref=e226]
+                  - generic [ref=e228]: 长期目标
+                - generic [ref=e229]:
+                  - button "放回灵感池" [ref=e230]:
+                    - img [ref=e231]
+                  - button "放入今日案头" [ref=e233]:
+                    - img [ref=e234]
+              - generic [ref=e240]:
+                - img [ref=e242]
+                - heading "45提5他" [level=4] [ref=e245]
+                - generic [ref=e246]:
+                  - button "放回灵感池" [ref=e247]:
+                    - img [ref=e248]
+                  - button "放入今日案头" [ref=e250]:
+                    - img [ref=e251]
+              - generic [ref=e257]:
+                - img [ref=e259]
+                - heading "ghjghjhjj" [level=4] [ref=e262]
+                - generic [ref=e263]:
+                  - button "放回灵感池" [ref=e264]:
+                    - img [ref=e265]
+                  - button "放入今日案头" [ref=e267]:
+                    - img [ref=e268]
+          - generic [ref=e274]:
+            - heading "灵感池备选" [level=3] [ref=e276]
+            - generic [ref=e277]:
+              - generic [ref=e278]:
+                - generic [ref=e279]: 啊啊
+                - button [ref=e280]:
+                  - img [ref=e281]
+              - generic [ref=e283]:
+                - generic [ref=e284]: 让任何和
+                - button [ref=e285]:
+                  - img [ref=e286]

@@ -16,6 +16,7 @@ interface Task {
   completedAt?: number;
   isHighlight?: boolean;
   highlightNote?: string;
+  sourceGoalId?: string;
 }
 
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -49,7 +50,8 @@ function isTask(value: unknown): value is Task {
   const validOptionalFields =
     (task.completedAt === undefined || typeof task.completedAt === 'number') &&
     (task.isHighlight === undefined || typeof task.isHighlight === 'boolean') &&
-    (task.highlightNote === undefined || typeof task.highlightNote === 'string');
+    (task.highlightNote === undefined || typeof task.highlightNote === 'string') &&
+    (task.sourceGoalId === undefined || typeof task.sourceGoalId === 'string');
 
   return validOptionalFields;
 }

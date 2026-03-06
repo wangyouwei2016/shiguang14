@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useTasks } from '@/lib/useTasks';
+import { useTasks, TaskPatch } from '@/lib/useTasks';
+import { useGoals, Goal, GoalPatch, GOAL_TERM_LABELS } from '@/lib/useGoals';
 
 // Components
 import Sidebar from '@/components/Sidebar';
@@ -15,20 +16,52 @@ import TimeFootprints from '@/components/TimeFootprints';
 export type ViewType = 'today' | 'focus' | 'idea' | 'history';
 
 export default function App() {
-  const { tasks, addTask, updateTask, updateTaskStatus, toggleHighlight, deleteTask, isLoaded, loadError, saveError } = useTasks();
+  const { tasks, addTask, updateTask, updateTaskStatus, updateTasksByGoalId, toggleHighlight, deleteTask, deleteTasksByGoalId, isLoaded, loadError, saveError } = useTasks();
+  const { goals, addGoal, updateGoal, deleteGoal, isLoaded: isGoalsLoaded, loadError: goalsLoadError, saveError: goalsSaveError } = useGoals();
   const [currentView, setCurrentView] = useState<ViewType>('today');
 
-  if (!isLoaded) return null;
-  if (loadError) {
+  if (!isLoaded || !isGoalsLoaded) return null;
+
+  const fatalError = loadError ?? goalsLoadError;
+  if (fatalError) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-[#F5F3EF] text-[#3A3731]">
         <div className="max-w-xl text-center space-y-3 px-6">
           <h2 className="font-serif text-2xl">任务数据加载失败</h2>
-          <p className="text-[#7A7772] text-sm leading-relaxed break-words">{loadError}</p>
+          <p className="text-[#7A7772] text-sm leading-relaxed break-words">{fatalError}</p>
         </div>
       </div>
     );
   }
+
+  const persistError = saveError ?? goalsSaveError;
+
+  const handleAddGoalToFocus = (goal: Goal) => {
+    const hasActiveTask = tasks.some((task) => task.sourceGoalId === goal.id && task.status !== 'completed');
+    if (hasActiveTask) {
+      return;
+    }
+    addTask(goal.title, [GOAL_TERM_LABELS[goal.term]], { status: 'focus', sourceGoalId: goal.id });
+  };
+
+  const handleUpdateGoal = (goalId: string, patch: GoalPatch) => {
+    updateGoal(goalId, patch);
+    const taskPatch: TaskPatch = {};
+    if (patch.title !== undefined) {
+      taskPatch.title = patch.title;
+    }
+    if (patch.term !== undefined) {
+      taskPatch.tags = [GOAL_TERM_LABELS[patch.term]];
+    }
+    if (taskPatch.title !== undefined || taskPatch.tags !== undefined) {
+      updateTasksByGoalId(goalId, taskPatch);
+    }
+  };
+
+  const handleDeleteGoal = (goalId: string) => {
+    deleteGoal(goalId);
+    deleteTasksByGoalId(goalId);
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#F5F3EF] relative">
@@ -48,9 +81,9 @@ export default function App() {
           <QuickCapture onAdd={addTask} />
         </div>
 
-        {saveError && (
+        {persistError && (
           <div className="absolute top-24 right-6 z-50 rounded-md border border-red-300 bg-red-50/95 px-4 py-2 text-xs text-red-700">
-            保存失败：{saveError}
+            保存失败：{persistError}
           </div>
         )}
 
@@ -80,9 +113,15 @@ export default function App() {
                 {currentView === 'idea' && (
                   <IdeaPool
                     tasks={tasks}
+                    goals={goals}
+                    addGoal={addGoal}
+                    addGoalToFocus={handleAddGoalToFocus}
+                    updateGoal={handleUpdateGoal}
                     updateTask={updateTask}
                     updateTaskStatus={updateTaskStatus}
                     deleteTask={deleteTask}
+                    deleteGoal={handleDeleteGoal}
+                    goalsSaveError={goalsSaveError}
                   />
                 )}
                 {currentView === 'history' && (

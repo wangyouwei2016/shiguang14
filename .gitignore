@@ -1,7 +1,12 @@
 node_modules/
 .next/
+.next_bak_*/
+.npm-cache-local/
+.playwright-cli/
 coverage/
 .DS_Store
 *.log
+.node_modules_*/
+.package-lock.*
 .env*
 !.env.example

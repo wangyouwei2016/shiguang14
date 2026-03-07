@@ -16,6 +16,9 @@ const serif = Noto_Serif({
 export const metadata: Metadata = {
   title: '拾光 14 | 极简个人成长管理',
   description: '一款为独立创造者、终身学习者打造的极简生活/学习目标管理 Web 应用。',
+  icons: {
+    icon: '/icon.svg',
+  },
 };
 
 export default function RootLayout({children}: {children: React.ReactNode}) {

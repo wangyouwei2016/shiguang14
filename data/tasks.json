@@ -1,9 +1,26 @@
 [
   {
+    "id": "qvvyv5p",
+    "title": "kkk",
+    "createdAt": 1772893760926,
+    "status": "focus",
+    "tags": [
+      "中期目标"
+    ],
+    "sourceGoalId": "aeeq509"
+  },
+  {
+    "id": "v05w7uw",
+    "title": "nnnn",
+    "createdAt": 1772893685107,
+    "status": "idea",
+    "tags": []
+  },
+  {
     "id": "u5aigmy",
     "title": "目标注释A验证目标A",
     "createdAt": 1772786786552,
-    "status": "focus",
+    "status": "idea",
     "tags": [
       "长期目标"
     ],
@@ -20,8 +37,9 @@
     "id": "0wzwgc8",
     "title": "45提5他",
     "createdAt": 1772764935543,
-    "status": "focus",
-    "tags": []
+    "status": "completed",
+    "tags": [],
+    "completedAt": 1772893795842
   },
   {
     "id": "88qy05e",
@@ -46,7 +64,7 @@
   },
   {
     "id": "9vpy0yf",
-    "title": "托尔斯泰ffff灌灌灌灌",
+    "title": "托尔斯泰ffff灌灌灌灌000",
     "createdAt": 1772763284607,
     "status": "completed",
     "tags": [],

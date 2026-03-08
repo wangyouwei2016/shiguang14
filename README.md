@@ -241,3 +241,85 @@ This is a working prototype with a complete core workflow. Good next steps inclu
 项目中保留了一些 AI Studio 模板痕迹（例如默认 README、环境变量说明与相关依赖），但当前业务主体已经演化为一个专注于个人成长管理的独立 Web 应用。
 
 Some starter-template traces from AI Studio remain in the repository, but the product itself has already evolved into a focused personal growth management web app.
+
+## Docker 部署 / Docker Deployment
+
+当前项目已经启用 Next.js `standalone` 输出，适合直接构建为单容器镜像，并把运行时数据目录挂载到宿主机。
+
+This project already uses Next.js `standalone` output, so it can be deployed as a single container while mounting the runtime data directory to the host.
+
+### 构建镜像 / Build Image
+
+```bash
+docker build -t shiguang14:latest .
+```
+
+### 挂载数据运行 / Run with Persistent Data
+
+项目会在容器内读写 `/app/data/tasks.json` 与 `/app/data/goals.json`。
+因此建议将宿主机的 `data` 目录挂载到容器的 `/app/data`。
+
+The app reads and writes `/app/data/tasks.json` and `/app/data/goals.json` inside the container.
+Mount your host `data` directory to `/app/data` to keep data persistent.
+
+```bash
+mkdir -p data
+
+docker run -d \
+  --name shiguang14 \
+  -p 3000:3000 \
+  -v "$(pwd)/data:/app/data" \
+  --restart unless-stopped \
+  shiguang14:latest
+```
+
+启动后访问 / Open after startup:
+
+```text
+http://localhost:3000
+```
+
+### 常用命令 / Useful Commands
+
+查看日志 / View logs:
+
+```bash
+docker logs -f shiguang14
+```
+
+停止容器 / Stop container:
+
+```bash
+docker stop shiguang14
+```
+
+删除容器 / Remove container:
+
+```bash
+docker rm -f shiguang14
+```
+
+重新启动 / Recreate with the same mounted data:
+
+```bash
+docker rm -f shiguang14
+
+docker run -d \
+  --name shiguang14 \
+  -p 3000:3000 \
+  -v "$(pwd)/data:/app/data" \
+  --restart unless-stopped \
+  shiguang14:latest
+```
+
+### 持久化说明 / Persistence Notes
+
+- 容器镜像本身不打包你的运行期 JSON 数据，避免把个人数据烘焙进镜像
+- 实际持久化文件保存在宿主机的 `./data` 目录
+- 如果 `tasks.json` 或 `goals.json` 不存在，应用会在首次写入时自动创建
+- 当前方案适合单用户、低并发使用场景
+
+- The image does not bake your runtime JSON data into the container
+- Persistent files live on the host under `./data`
+- If `tasks.json` or `goals.json` is missing, the app creates it on first write
+- This deployment model is best for single-user, low-concurrency usage

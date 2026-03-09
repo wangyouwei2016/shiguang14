@@ -54,6 +54,13 @@ Time Footprints is a timeline of completed work. Users can highlight meaningful 
 
 Goal Management maintains long-, mid-, and short-term goals. Goals can be edited, categorized, and turned into linked execution tasks inside Focus 14.
 
+### 7. 访问密码 / Access Password
+- 启用统一登录页，输入密码后才可进入应用。
+- 所有任务与目标 API 都会进行登录态校验。
+- 密码通过环境变量 `APP_LOGIN_PASSWORD` 自定义。
+
+The app now has a password gate. You must log in before accessing pages or data APIs, and the password is configured with `APP_LOGIN_PASSWORD`.
+
 ## 技术栈 / Tech Stack
 
 | 层级 / Layer | 技术 / Technology | 说明 / Notes |
@@ -64,7 +71,7 @@ Goal Management maintains long-, mid-, and short-term goals. Goals can be edited
 | Styling | `Tailwind CSS 4` | 原子化样式与全局视觉系统 |
 | Animation | `motion` | 页面切换与列表微动效 |
 | Icons | `lucide-react` | 轻量图标库 |
-| Server API | `Next.js Route Handlers` | 提供 `/api/tasks` 与 `/api/goals` |
+| Server API | `Next.js Route Handlers` | 提供登录与数据接口（`/api/auth/login`、`/api/tasks`、`/api/goals`） |
 | Persistence | `JSON files` | 数据落盘到 `data/tasks.json` 与 `data/goals.json` |
 | Tooling | `PostCSS` | 样式处理与构建辅助 |
 | Deployment | `Next standalone output` | `next.config.ts` 中启用 `output: 'standalone'` |
@@ -91,10 +98,12 @@ When users change tasks or goals, the client hooks update local state and then p
 .
 ├── app/
 │   ├── api/
+│   │   ├── auth/login/route.ts # Password login API
 │   │   ├── goals/route.ts      # Goal read/write API
 │   │   └── tasks/route.ts      # Task read/write API
 │   ├── globals.css             # Global styles and texture utilities
 │   ├── layout.tsx              # App layout and metadata
+│   ├── login/page.tsx          # Login page
 │   └── page.tsx                # Main entry and view orchestration
 ├── components/
 │   ├── Focus14.tsx             # 14-day focus view
@@ -114,7 +123,9 @@ When users change tasks or goals, the client hooks update local state and then p
 ├── lib/
 │   ├── useGoals.ts             # Goal state + persistence hook
 │   ├── useTasks.ts             # Task state + persistence hook
+│   ├── auth.ts                 # Auth token/password helpers
 │   └── utils.ts                # Shared utilities
+├── middleware.ts               # Global auth guard
 ├── next.config.ts
 ├── package.json
 └── README.md
@@ -157,8 +168,11 @@ The project ships with the following environment variable template:
 
 - `GEMINI_API_KEY`
 - `APP_URL`
+- `APP_LOGIN_PASSWORD`
 
-需要注意的是：**当前业务功能并没有实际调用 Gemini API**。这些变量更像是继承自 AI Studio 模板的预留配置，而不是当前版本的核心依赖。
+`APP_LOGIN_PASSWORD` 是当前版本的必填项，用于登录验证。建议在 `.env.local` 中设置高强度密码（例如 16 位以上，包含字母、数字、符号）。
+
+需要注意的是：**当前业务功能并没有实际调用 Gemini API**。`GEMINI_API_KEY` 与 `APP_URL` 更像是继承自 AI Studio 模板的预留配置，而不是当前版本的核心依赖。
 
 Important note: **the current product logic does not actively call the Gemini API**. These variables appear to be inherited from the AI Studio starter template and are not essential to the current feature set.
 
@@ -203,6 +217,11 @@ Returns the full goal collection.
 接收完整目标数组并落盘，服务端会做基础结构校验。
 
 Accepts the full goal array, validates the payload, and writes it to disk.
+
+### `POST /api/auth/login`
+提交 `password` 字段进行密码验证；验证通过后写入 HttpOnly cookie 并建立登录态。
+
+Accepts a `password` field, validates it, and sets an HttpOnly auth cookie on success.
 
 ## 设计风格 / Design Notes
 

@@ -19,7 +19,7 @@ export type ViewType = 'today' | 'focus' | 'idea' | 'history';
 export default function App() {
   const { tasks, addTask, updateTask, updateTaskStatus, updateTasksByGoalId, toggleHighlight, deleteTask, deleteTasksByGoalId, isLoaded, loadError, saveError } = useTasks();
   const { goals, addGoal, updateGoal, deleteGoal, isLoaded: isGoalsLoaded, loadError: goalsLoadError, saveError: goalsSaveError } = useGoals();
-  const { focusCycle, beginWindow, completeActiveWindow, updateReview, isLoaded: isCycleLoaded, loadError: cycleLoadError, saveError: cycleSaveError } = useFocusCycle();
+  const { focusCycle, beginWindow, completeActiveWindow, updateReview, deleteReview, isLoaded: isCycleLoaded, loadError: cycleLoadError, saveError: cycleSaveError } = useFocusCycle();
   const [currentView, setCurrentView] = useState<ViewType>('today');
 
   if (!isLoaded || !isGoalsLoaded || !isCycleLoaded) return null;
@@ -138,6 +138,7 @@ export default function App() {
                     tasks={tasks}
                     focusReviews={focusCycle.reviews}
                     updateFocusReview={updateReview}
+                    deleteFocusReview={deleteReview}
                     updateTask={updateTask}
                     toggleHighlight={toggleHighlight}
                     deleteTask={deleteTask}

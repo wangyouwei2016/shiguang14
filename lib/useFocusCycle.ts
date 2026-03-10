@@ -231,11 +231,19 @@ export function useFocusCycle() {
     }));
   };
 
+  const deleteReview = (reviewId: string) => {
+    setFocusCycle((prev) => ({
+      ...prev,
+      reviews: prev.reviews.filter((review) => review.id !== reviewId),
+    }));
+  };
+
   return {
     focusCycle,
     beginWindow,
     completeActiveWindow,
     updateReview,
+    deleteReview,
     isLoaded,
     loadError,
     saveError,

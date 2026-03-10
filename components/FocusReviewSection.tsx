@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
-import { Backpack, PencilLine } from 'lucide-react';
+import { Backpack, PencilLine, Trash2 } from 'lucide-react';
 import { FocusReview, UpdateFocusReviewInput } from '@/lib/useFocusCycle';
 import FocusReviewEditModal from '@/components/FocusReviewEditModal';
 
 interface FocusReviewSectionProps {
   focusReviews: FocusReview[];
   updateFocusReview: (reviewId: string, input: UpdateFocusReviewInput) => void;
+  deleteFocusReview: (reviewId: string) => void;
 }
 
 const ID_RADIX = 36;
@@ -40,7 +41,7 @@ function toTasksText(titles: string[]): string {
   return titles.join('\n');
 }
 
-export default function FocusReviewSection({ focusReviews, updateFocusReview }: FocusReviewSectionProps) {
+export default function FocusReviewSection({ focusReviews, updateFocusReview, deleteFocusReview }: FocusReviewSectionProps) {
   const reviews = useMemo(() => [...focusReviews].sort((a, b) => b.createdAt - a.createdAt), [focusReviews]);
   const [editingReview, setEditingReview] = useState<FocusReview | null>(null);
   const [draftSummary, setDraftSummary] = useState('');
@@ -72,6 +73,17 @@ export default function FocusReviewSection({ focusReviews, updateFocusReview }: 
     cancelEditing();
   };
 
+  const handleDelete = (review: FocusReview) => {
+    const ok = window.confirm('确定删除这条行囊复盘吗？此操作不可撤销。');
+    if (!ok) {
+      return;
+    }
+    if (editingReview?.id === review.id) {
+      cancelEditing();
+    }
+    deleteFocusReview(review.id);
+  };
+
   if (reviews.length === 0) {
     return null;
   }
@@ -84,7 +96,9 @@ export default function FocusReviewSection({ focusReviews, updateFocusReview }: 
             <Backpack size={16} strokeWidth={1.5} className="text-[#7A8B76]" />
             行囊复盘
           </h3>
-          <span className="text-[12px] text-[#7A7772]">{reviews.length}</span>
+          <span className="text-[12px] font-mono tracking-wider px-2 py-1 rounded-full bg-[#7A8B76]/10 text-[#5E6F61] border border-[#7A8B76]/25">
+            {reviews.length}
+          </span>
         </div>
         <div className="space-y-4">
           {reviews.map((review) => (
@@ -103,6 +117,13 @@ export default function FocusReviewSection({ focusReviews, updateFocusReview }: 
                 </div>
                 <div className="shrink-0 flex items-center gap-3">
                   <span className="text-[12px] text-[#7A7772]">完成 {review.completedTaskTitles.length} 项</span>
+                  <button
+                    onClick={() => handleDelete(review)}
+                    className="p-1.5 rounded-md text-[#7A7772] hover:text-[#B45353] hover:bg-red-500/10 transition-colors"
+                    title="删除复盘"
+                  >
+                    <Trash2 size={16} strokeWidth={1.5} />
+                  </button>
                   <button
                     onClick={() => startEditing(review)}
                     className="p-1.5 rounded-md text-[#7A7772] hover:text-[#3A3731] hover:bg-[#3A3731]/5 transition-colors"

@@ -2,15 +2,19 @@ import { Task, TaskPatch } from '@/lib/useTasks';
 import { motion } from 'motion/react';
 import { Star, CheckCircle2, MessageSquarePlus, Trash2, PencilLine } from 'lucide-react';
 import { useState } from 'react';
+import { FocusReview, UpdateFocusReviewInput } from '@/lib/useFocusCycle';
+import FocusReviewSection from '@/components/FocusReviewSection';
 
 interface TimeFootprintsProps {
   tasks: Task[];
+  focusReviews: FocusReview[];
+  updateFocusReview: (reviewId: string, input: UpdateFocusReviewInput) => void;
   updateTask: (id: string, patch: TaskPatch) => void;
   toggleHighlight: (id: string, note?: string) => void;
   deleteTask: (id: string) => void;
 }
 
-export default function TimeFootprints({ tasks, updateTask, toggleHighlight, deleteTask }: TimeFootprintsProps) {
+export default function TimeFootprints({ tasks, focusReviews, updateFocusReview, updateTask, toggleHighlight, deleteTask }: TimeFootprintsProps) {
   const completedTasks = tasks
     .filter(t => t.status === 'completed' && t.completedAt)
     .sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0));
@@ -64,6 +68,8 @@ export default function TimeFootprints({ tasks, updateTask, toggleHighlight, del
       </header>
 
       <div className="flex-1 overflow-y-auto pr-4 pb-20">
+        <FocusReviewSection focusReviews={focusReviews} updateFocusReview={updateFocusReview} />
+
         {Object.keys(groupedTasks).length === 0 ? (
           <div className="text-center text-[#7A7772] mt-20 text-[15px] tracking-wide">
             还没有完成的任务，去「今日案头」打个勾吧。

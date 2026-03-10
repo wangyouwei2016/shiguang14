@@ -10,3 +10,6 @@ coverage/
 .package-lock.*
 .env*
 !.env.example
+
+# Runtime data (mounted to /app/data in Docker)
+data/focus-cycle.json

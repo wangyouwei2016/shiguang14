@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTasks, TaskPatch } from '@/lib/useTasks';
 import { useGoals, Goal, GoalPatch, GOAL_TERM_LABELS } from '@/lib/useGoals';
+import { useFocusCycle } from '@/lib/useFocusCycle';
 
 // Components
 import Sidebar from '@/components/Sidebar';
@@ -18,11 +19,12 @@ export type ViewType = 'today' | 'focus' | 'idea' | 'history';
 export default function App() {
   const { tasks, addTask, updateTask, updateTaskStatus, updateTasksByGoalId, toggleHighlight, deleteTask, deleteTasksByGoalId, isLoaded, loadError, saveError } = useTasks();
   const { goals, addGoal, updateGoal, deleteGoal, isLoaded: isGoalsLoaded, loadError: goalsLoadError, saveError: goalsSaveError } = useGoals();
+  const { focusCycle, beginWindow, completeActiveWindow, updateReview, isLoaded: isCycleLoaded, loadError: cycleLoadError, saveError: cycleSaveError } = useFocusCycle();
   const [currentView, setCurrentView] = useState<ViewType>('today');
 
-  if (!isLoaded || !isGoalsLoaded) return null;
+  if (!isLoaded || !isGoalsLoaded || !isCycleLoaded) return null;
 
-  const fatalError = loadError ?? goalsLoadError;
+  const fatalError = loadError ?? goalsLoadError ?? cycleLoadError;
   if (fatalError) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-[#F5F3EF] text-[#3A3731]">
@@ -34,7 +36,7 @@ export default function App() {
     );
   }
 
-  const persistError = saveError ?? goalsSaveError;
+  const persistError = saveError ?? goalsSaveError ?? cycleSaveError;
 
   const handleAddGoalToFocus = (goal: Goal) => {
     const hasActiveTask = tasks.some((task) => task.sourceGoalId === goal.id && task.status !== 'completed');
@@ -108,7 +110,14 @@ export default function App() {
                   />
                 )}
                 {currentView === 'focus' && (
-                  <Focus14 tasks={tasks} updateTaskStatus={updateTaskStatus} />
+                  <Focus14
+                    tasks={tasks}
+                    activeWindow={focusCycle.activeWindow}
+                    beginWindow={beginWindow}
+                    completeActiveWindow={completeActiveWindow}
+                    cycleSaveError={cycleSaveError}
+                    updateTaskStatus={updateTaskStatus}
+                  />
                 )}
                 {currentView === 'idea' && (
                   <IdeaPool
@@ -127,6 +136,8 @@ export default function App() {
                 {currentView === 'history' && (
                   <TimeFootprints
                     tasks={tasks}
+                    focusReviews={focusCycle.reviews}
+                    updateFocusReview={updateReview}
                     updateTask={updateTask}
                     toggleHighlight={toggleHighlight}
                     deleteTask={deleteTask}

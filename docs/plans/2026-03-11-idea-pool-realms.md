@@ -161,3 +161,30 @@ Expected: 退出码 0
 
 若回退产生变更并需提交，再提交；否则跳过。
 
+---
+
+### Task 6: 14 天行囊备选仅展示灵思
+
+**Files:**
+- Modify: `components/Focus14.tsx`
+
+**Step 1: 备选列表过滤为灵思**
+
+- 右侧备选列表仅展示：`status === 'idea'` 且 `ideaRealm` 缺省视为 `lingsi` 的任务
+
+**Step 2: 文案调整**
+
+- 右侧标题「觉行三境备选」改为「灵思备选」
+- 行囊为空时的提示文案同步改为从右侧「灵思备选」挑选
+
+**Step 3: 验证**
+
+Run: `npm run build`  
+Expected: 退出码 0
+
+**Step 4: Commit**
+
+```bash
+git add components/Focus14.tsx
+git commit -m "feat: show only lingsi candidates in focus14"
+```

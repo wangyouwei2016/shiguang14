@@ -6,6 +6,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 type TaskStatus = 'idea' | 'focus' | 'today' | 'completed';
+type IdeaRealm = 'lingsi' | 'duyu';
 
 interface Task {
   id: string;
@@ -17,6 +18,7 @@ interface Task {
   isHighlight?: boolean;
   highlightNote?: string;
   sourceGoalId?: string;
+  ideaRealm?: IdeaRealm;
 }
 
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -24,6 +26,10 @@ const TASKS_FILE = path.join(DATA_DIR, 'tasks.json');
 
 function isTaskStatus(value: unknown): value is TaskStatus {
   return value === 'idea' || value === 'focus' || value === 'today' || value === 'completed';
+}
+
+function isIdeaRealm(value: unknown): value is IdeaRealm {
+  return value === 'lingsi' || value === 'duyu';
 }
 
 function isNotFoundError(error: unknown): error is NodeJS.ErrnoException {
@@ -51,7 +57,8 @@ function isTask(value: unknown): value is Task {
     (task.completedAt === undefined || typeof task.completedAt === 'number') &&
     (task.isHighlight === undefined || typeof task.isHighlight === 'boolean') &&
     (task.highlightNote === undefined || typeof task.highlightNote === 'string') &&
-    (task.sourceGoalId === undefined || typeof task.sourceGoalId === 'string');
+    (task.sourceGoalId === undefined || typeof task.sourceGoalId === 'string') &&
+    (task.ideaRealm === undefined || isIdeaRealm(task.ideaRealm));
 
   return validOptionalFields;
 }

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 
 export type TaskStatus = 'idea' | 'focus' | 'today' | 'completed';
 
+export type IdeaRealm = 'lingsi' | 'duyu';
+
 export interface Task {
   id: string;
   title: string;
@@ -12,13 +14,15 @@ export interface Task {
   isHighlight?: boolean;
   highlightNote?: string;
   sourceGoalId?: string;
+  ideaRealm?: IdeaRealm;
 }
 
-export type TaskPatch = Partial<Pick<Task, 'title' | 'tags' | 'highlightNote' | 'isHighlight'>>;
+export type TaskPatch = Partial<Pick<Task, 'title' | 'tags' | 'highlightNote' | 'isHighlight' | 'ideaRealm'>>;
 
 interface AddTaskOptions {
   status?: TaskStatus;
   sourceGoalId?: string;
+  ideaRealm?: IdeaRealm;
 }
 
 interface TasksResponse {
@@ -37,6 +41,7 @@ function createTaskId(): string {
 
 function buildTask(title: string, tags: string[], options: AddTaskOptions): Task {
   const status = options.status ?? 'idea';
+  const ideaRealm = status === 'idea' ? (options.ideaRealm ?? 'lingsi') : undefined;
   const task: Task = {
     id: createTaskId(),
     title,
@@ -44,6 +49,7 @@ function buildTask(title: string, tags: string[], options: AddTaskOptions): Task
     status,
     tags,
     sourceGoalId: options.sourceGoalId,
+    ideaRealm,
   };
   if (status === 'completed') {
     task.completedAt = Date.now();

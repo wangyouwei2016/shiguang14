@@ -54,12 +54,14 @@ Time Footprints is a timeline of completed work. Users can highlight meaningful 
 
 Goal Management maintains long-, mid-, and short-term goals. Goals can be edited, categorized, and turned into linked execution tasks inside Focus 14.
 
-### 7. 访问密码 / Access Password
-- 启用统一登录页，输入密码后才可进入应用。
-- 所有任务与目标 API 都会进行登录态校验。
-- 密码通过环境变量 `APP_LOGIN_PASSWORD` 自定义。
+### 7. 登录验证 / Login Gate
+- 启用统一登录页，输入用户名 + 密码（或旧模式仅密码）后才可进入应用。
+- 所有页面与数据 API 都会进行登录态校验。
+- 通过环境变量选择登录模式（两者只能选一个）：
+  - 单密码：`APP_LOGIN_PASSWORD`
+  - 多用户：`APP_LOGIN_USERS="user1:pass1,user2:pass2"`
 
-The app now has a password gate. You must log in before accessing pages or data APIs, and the password is configured with `APP_LOGIN_PASSWORD`.
+The app includes a simple login gate. You must log in before accessing pages or data APIs. Configure either a single password (`APP_LOGIN_PASSWORD`) or multiple fixed users (`APP_LOGIN_USERS`).
 
 ## 技术栈 / Tech Stack
 
@@ -72,7 +74,7 @@ The app now has a password gate. You must log in before accessing pages or data 
 | Animation | `motion` | 页面切换与列表微动效 |
 | Icons | `lucide-react` | 轻量图标库 |
 | Server API | `Next.js Route Handlers` | 提供登录与数据接口（`/api/auth/login`、`/api/tasks`、`/api/goals`） |
-| Persistence | `JSON files` | 数据落盘到 `data/tasks.json` 与 `data/goals.json` |
+| Persistence | `JSON files` | 数据落盘到 `data/*.json`（多用户模式为 `data/users/<username>/*.json`） |
 | Tooling | `PostCSS` | 样式处理与构建辅助 |
 | Deployment | `Next standalone output` | `next.config.ts` 中启用 `output: 'standalone'` |
 
@@ -168,9 +170,13 @@ The project ships with the following environment variable template:
 
 - `GEMINI_API_KEY`
 - `APP_URL`
-- `APP_LOGIN_PASSWORD`
+- `APP_LOGIN_PASSWORD`（单密码模式）
+- `APP_LOGIN_USERS`（多用户模式）
 
-`APP_LOGIN_PASSWORD` 是当前版本的必填项，用于登录验证。建议在 `.env.local` 中设置高强度密码（例如 16 位以上，包含字母、数字、符号）。
+登录模式通过环境变量二选一（不可同时设置）：
+
+- 单密码：设置 `APP_LOGIN_PASSWORD`
+- 多用户：设置 `APP_LOGIN_USERS="user1:pass1,user2:pass2"`（用户名/密码中不要包含 `,` 或 `:`）
 
 需要注意的是：**当前业务功能并没有实际调用 Gemini API**。`GEMINI_API_KEY` 与 `APP_URL` 更像是继承自 AI Studio 模板的预留配置，而不是当前版本的核心依赖。
 
@@ -184,9 +190,16 @@ The current version uses **file-based persistence**, which is great for local de
 
 - 任务数据：`data/tasks.json`
 - 目标数据：`data/goals.json`
+- 行囊周期/复盘：`data/focus-cycle.json`
 - 读接口：`GET /api/tasks`、`GET /api/goals`
 - 写接口：`PUT /api/tasks`、`PUT /api/goals`
 - 写入方式：先写临时文件，再重命名覆盖，降低写坏文件的风险
+
+启用 `APP_LOGIN_USERS`（多用户模式）后，数据会按用户隔离到：
+
+- `data/users/<username>/tasks.json`
+- `data/users/<username>/goals.json`
+- `data/users/<username>/focus-cycle.json`
 
 ### 适用边界 / Limitations
 

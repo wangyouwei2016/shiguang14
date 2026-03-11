@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Task, TaskStatus } from '@/lib/useTasks';
+import { IdeaRealm, Task, TaskStatus } from '@/lib/useTasks';
 import { CompleteFocusWindowInput, FocusWindow, FOCUS_WINDOW_DAYS } from '@/lib/useFocusCycle';
 import { motion } from 'motion/react';
 import { ArrowLeft, ArrowRight, CalendarDays, CheckCheck, Circle, Play, Sun } from 'lucide-react';
@@ -15,6 +15,11 @@ interface Focus14Props {
 }
 
 const DATE_INPUT_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const DEFAULT_IDEA_REALM: IdeaRealm = 'lingsi';
+
+function getIdeaRealm(task: Task): IdeaRealm {
+  return task.ideaRealm ?? DEFAULT_IDEA_REALM;
+}
 
 function toDateInputValue(date: Date): string {
   const year = `${date.getFullYear()}`;
@@ -67,7 +72,9 @@ export default function Focus14({
   updateTaskStatus,
 }: Focus14Props) {
   const focusTasks = tasks.filter((task) => task.status === 'focus');
-  const ideaTasks = tasks.filter((task) => task.status === 'idea');
+  const lingsiIdeaTasks = tasks.filter(
+    (task) => task.status === 'idea' && getIdeaRealm(task) === DEFAULT_IDEA_REALM,
+  );
   const [selectedStartDate, setSelectedStartDate] = useState(() => toDateInputValue(new Date()));
   const [reviewSummary, setReviewSummary] = useState('');
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
@@ -166,7 +173,7 @@ export default function Focus14({
                 <div className="h-full flex items-center justify-center text-[#7A7772] text-[14px] tracking-wide text-center px-4 opacity-70">
                   行囊是空的
                   <br />
-                  从右侧觉行三境挑选任务放入行囊
+                  从右侧灵思备选挑选任务放入行囊
                 </div>
               ) : (
                 focusTasks.map((task) => (
@@ -216,10 +223,10 @@ export default function Focus14({
 
             <div className="lg:col-span-2 flex flex-col h-full bg-transparent rounded-[12px] border border-[#3A3731]/10 border-dashed overflow-hidden hidden lg:flex">
             <div className="px-5 py-4 border-b border-[#3A3731]/5 border-dashed flex justify-between items-center">
-              <h3 className="font-medium text-[#7A7772] text-[14px] tracking-wide">觉行三境备选</h3>
+              <h3 className="font-medium text-[#7A7772] text-[14px] tracking-wide">灵思备选</h3>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
-              {ideaTasks.map((task) => (
+              {lingsiIdeaTasks.map((task) => (
                 <div key={task.id} className="group flex items-center justify-between p-3 bg-white/40 hover:bg-white/70 rounded-lg border border-transparent hover:border-[#3A3731]/5 transition-colors">
                   <span className="text-[14px] text-[#7A7772] group-hover:text-[#3A3731] truncate pr-4 tracking-wide transition-colors">{task.title}</span>
                   <button

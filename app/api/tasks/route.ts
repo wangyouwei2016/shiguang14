@@ -1,6 +1,8 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { AUTH_USER_COOKIE_NAME, AuthConfig, MultiAuthConfig, readAuthConfig } from '@/lib/auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -22,7 +24,33 @@ interface Task {
 }
 
 const DATA_DIR = path.join(process.cwd(), 'data');
-const TASKS_FILE = path.join(DATA_DIR, 'tasks.json');
+const LEGACY_TASKS_FILE = path.join(DATA_DIR, 'tasks.json');
+const USERS_DIR = path.join(DATA_DIR, 'users');
+const TASKS_FILENAME = 'tasks.json';
+
+type TasksFileSelection =
+  | { ok: true; filePath: string }
+  | { ok: false; response: NextResponse };
+
+function toUserDir(username: string): string {
+  return path.join(USERS_DIR, encodeURIComponent(username));
+}
+
+function toUserTasksFile(username: string): string {
+  return path.join(toUserDir(username), TASKS_FILENAME);
+}
+
+function getFirstUsername(config: MultiAuthConfig): string {
+  return config.orderedUsernames[0];
+}
+
+async function getAuthenticatedUsername(config: AuthConfig): Promise<string | null> {
+  if (config.mode === 'single') {
+    return null;
+  }
+  const cookieStore = await cookies();
+  return cookieStore.get(AUTH_USER_COOKIE_NAME)?.value ?? null;
+}
 
 function isTaskStatus(value: unknown): value is TaskStatus {
   return value === 'idea' || value === 'focus' || value === 'today' || value === 'completed';
@@ -73,30 +101,78 @@ function parseTasks(value: unknown): Task[] {
   return value;
 }
 
-async function ensureTasksFile(): Promise<void> {
-  await fs.mkdir(DATA_DIR, { recursive: true });
+async function fileExists(filePath: string): Promise<boolean> {
   try {
-    await fs.access(TASKS_FILE);
+    await fs.access(filePath);
+    return true;
   } catch (error) {
     if (!isNotFoundError(error)) {
       throw error;
     }
-    await fs.writeFile(TASKS_FILE, '[]\n', 'utf8');
+    return false;
   }
 }
 
-async function readTasks(): Promise<Task[]> {
-  await ensureTasksFile();
-  const content = await fs.readFile(TASKS_FILE, 'utf8');
+async function migrateLegacyTasksFile(config: MultiAuthConfig, username: string, tasksFile: string): Promise<void> {
+  if (username !== getFirstUsername(config)) {
+    return;
+  }
+  if (await fileExists(tasksFile)) {
+    return;
+  }
+  if (!(await fileExists(LEGACY_TASKS_FILE))) {
+    return;
+  }
+  await fs.mkdir(path.dirname(tasksFile), { recursive: true });
+  try {
+    await fs.rename(LEGACY_TASKS_FILE, tasksFile);
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      return;
+    }
+    throw error;
+  }
+}
+
+async function ensureTasksFile(filePath: string): Promise<void> {
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
+  if (await fileExists(filePath)) {
+    return;
+  }
+  await fs.writeFile(filePath, '[]\n', 'utf8');
+}
+
+async function getTasksFileSelection(): Promise<TasksFileSelection> {
+  const config = readAuthConfig();
+  if (config.mode === 'single') {
+    await ensureTasksFile(LEGACY_TASKS_FILE);
+    return { ok: true, filePath: LEGACY_TASKS_FILE };
+  }
+
+  const username = await getAuthenticatedUsername(config);
+  if (!username) {
+    return { ok: false, response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
+  }
+  if (!config.users.has(username)) {
+    return { ok: false, response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
+  }
+
+  const userTasksFile = toUserTasksFile(username);
+  await migrateLegacyTasksFile(config, username, userTasksFile);
+  await ensureTasksFile(userTasksFile);
+  return { ok: true, filePath: userTasksFile };
+}
+
+async function readTasks(tasksFile: string): Promise<Task[]> {
+  const content = await fs.readFile(tasksFile, 'utf8');
   const parsed = JSON.parse(content) as unknown;
   return parseTasks(parsed);
 }
 
-async function writeTasks(tasks: Task[]): Promise<void> {
-  await ensureTasksFile();
-  const tempFile = `${TASKS_FILE}.tmp`;
+async function writeTasks(tasksFile: string, tasks: Task[]): Promise<void> {
+  const tempFile = `${tasksFile}.tmp`;
   await fs.writeFile(tempFile, `${JSON.stringify(tasks, null, 2)}\n`, 'utf8');
-  await fs.rename(tempFile, TASKS_FILE);
+  await fs.rename(tempFile, tasksFile);
 }
 
 function toErrorMessage(error: unknown): string {
@@ -108,7 +184,11 @@ function toErrorMessage(error: unknown): string {
 
 export async function GET() {
   try {
-    const tasks = await readTasks();
+    const selection = await getTasksFileSelection();
+    if (!selection.ok) {
+      return selection.response;
+    }
+    const tasks = await readTasks(selection.filePath);
     return NextResponse.json({ tasks }, { status: 200 });
   } catch (error) {
     console.error('Failed to read tasks file:', error);
@@ -118,9 +198,13 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
+    const selection = await getTasksFileSelection();
+    if (!selection.ok) {
+      return selection.response;
+    }
     const payload = (await request.json()) as { tasks?: unknown };
     const tasks = parseTasks(payload.tasks);
-    await writeTasks(tasks);
+    await writeTasks(selection.filePath, tasks);
     return NextResponse.json({ tasks }, { status: 200 });
   } catch (error) {
     const message = toErrorMessage(error);

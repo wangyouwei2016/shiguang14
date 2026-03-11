@@ -1,6 +1,8 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { AUTH_USER_COOKIE_NAME, AuthConfig, MultiAuthConfig, readAuthConfig } from '@/lib/auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -26,8 +28,36 @@ interface FocusCycleState {
 }
 
 const DATA_DIR = path.join(process.cwd(), 'data');
-const FOCUS_CYCLE_FILE = path.join(DATA_DIR, 'focus-cycle.json');
+const LEGACY_FOCUS_CYCLE_FILE = path.join(DATA_DIR, 'focus-cycle.json');
+const USERS_DIR = path.join(DATA_DIR, 'users');
+const FOCUS_CYCLE_FILENAME = 'focus-cycle.json';
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+type FocusCycleFileSelection =
+  | { ok: true; filePath: string }
+  | { ok: false; response: NextResponse };
+
+function toUserDir(username: string): string {
+  return path.join(USERS_DIR, encodeURIComponent(username));
+}
+
+function toUserFocusCycleFile(username: string): string {
+  return path.join(toUserDir(username), FOCUS_CYCLE_FILENAME);
+}
+
+function getFirstUsername(config: MultiAuthConfig): string {
+  return config.orderedUsernames[0];
+}
+
+async function getAuthenticatedUsername(config: AuthConfig): Promise<string | null> {
+  if (config.mode === 'single') {
+    return null;
+  }
+  const cookieStore = await cookies();
+  return cookieStore.get(AUTH_USER_COOKIE_NAME)?.value ?? null;
+}
+
+const INITIAL_FOCUS_CYCLE: FocusCycleState = { activeWindow: null, reviews: [] };
 
 function isNotFoundError(error: unknown): error is NodeJS.ErrnoException {
   return typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT';
@@ -82,31 +112,82 @@ function parseFocusCycle(value: unknown): FocusCycleState {
   };
 }
 
-async function ensureFocusCycleFile(): Promise<void> {
-  await fs.mkdir(DATA_DIR, { recursive: true });
+async function fileExists(filePath: string): Promise<boolean> {
   try {
-    await fs.access(FOCUS_CYCLE_FILE);
+    await fs.access(filePath);
+    return true;
   } catch (error) {
     if (!isNotFoundError(error)) {
       throw error;
     }
-    const initialData: FocusCycleState = { activeWindow: null, reviews: [] };
-    await fs.writeFile(FOCUS_CYCLE_FILE, `${JSON.stringify(initialData, null, 2)}\n`, 'utf8');
+    return false;
   }
 }
 
-async function readFocusCycle(): Promise<FocusCycleState> {
-  await ensureFocusCycleFile();
-  const content = await fs.readFile(FOCUS_CYCLE_FILE, 'utf8');
+async function migrateLegacyFocusCycleFile(
+  config: MultiAuthConfig,
+  username: string,
+  focusCycleFile: string,
+): Promise<void> {
+  if (username !== getFirstUsername(config)) {
+    return;
+  }
+  if (await fileExists(focusCycleFile)) {
+    return;
+  }
+  if (!(await fileExists(LEGACY_FOCUS_CYCLE_FILE))) {
+    return;
+  }
+  await fs.mkdir(path.dirname(focusCycleFile), { recursive: true });
+  try {
+    await fs.rename(LEGACY_FOCUS_CYCLE_FILE, focusCycleFile);
+  } catch (error) {
+    if (isNotFoundError(error)) {
+      return;
+    }
+    throw error;
+  }
+}
+
+async function ensureFocusCycleFile(filePath: string): Promise<void> {
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
+  if (await fileExists(filePath)) {
+    return;
+  }
+  await fs.writeFile(filePath, `${JSON.stringify(INITIAL_FOCUS_CYCLE, null, 2)}\n`, 'utf8');
+}
+
+async function getFocusCycleFileSelection(): Promise<FocusCycleFileSelection> {
+  const config = readAuthConfig();
+  if (config.mode === 'single') {
+    await ensureFocusCycleFile(LEGACY_FOCUS_CYCLE_FILE);
+    return { ok: true, filePath: LEGACY_FOCUS_CYCLE_FILE };
+  }
+
+  const username = await getAuthenticatedUsername(config);
+  if (!username) {
+    return { ok: false, response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
+  }
+  if (!config.users.has(username)) {
+    return { ok: false, response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
+  }
+
+  const userFocusCycleFile = toUserFocusCycleFile(username);
+  await migrateLegacyFocusCycleFile(config, username, userFocusCycleFile);
+  await ensureFocusCycleFile(userFocusCycleFile);
+  return { ok: true, filePath: userFocusCycleFile };
+}
+
+async function readFocusCycle(focusCycleFile: string): Promise<FocusCycleState> {
+  const content = await fs.readFile(focusCycleFile, 'utf8');
   const parsed = JSON.parse(content) as unknown;
   return parseFocusCycle(parsed);
 }
 
-async function writeFocusCycle(focusCycle: FocusCycleState): Promise<void> {
-  await ensureFocusCycleFile();
-  const tempFile = `${FOCUS_CYCLE_FILE}.tmp`;
+async function writeFocusCycle(focusCycleFile: string, focusCycle: FocusCycleState): Promise<void> {
+  const tempFile = `${focusCycleFile}.tmp`;
   await fs.writeFile(tempFile, `${JSON.stringify(focusCycle, null, 2)}\n`, 'utf8');
-  await fs.rename(tempFile, FOCUS_CYCLE_FILE);
+  await fs.rename(tempFile, focusCycleFile);
 }
 
 function toErrorMessage(error: unknown): string {
@@ -118,7 +199,11 @@ function toErrorMessage(error: unknown): string {
 
 export async function GET() {
   try {
-    const focusCycle = await readFocusCycle();
+    const selection = await getFocusCycleFileSelection();
+    if (!selection.ok) {
+      return selection.response;
+    }
+    const focusCycle = await readFocusCycle(selection.filePath);
     return NextResponse.json({ focusCycle }, { status: 200 });
   } catch (error) {
     console.error('Failed to read focus cycle file:', error);
@@ -128,9 +213,13 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
+    const selection = await getFocusCycleFileSelection();
+    if (!selection.ok) {
+      return selection.response;
+    }
     const payload = (await request.json()) as { focusCycle?: unknown };
     const focusCycle = parseFocusCycle(payload.focusCycle);
-    await writeFocusCycle(focusCycle);
+    await writeFocusCycle(selection.filePath, focusCycle);
     return NextResponse.json({ focusCycle }, { status: 200 });
   } catch (error) {
     const message = toErrorMessage(error);

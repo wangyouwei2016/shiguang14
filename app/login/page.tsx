@@ -8,10 +8,12 @@ interface LoginApiResponse {
 }
 
 interface LoginPanelProps {
+  username: string;
   password: string;
   error: string | null;
   isSubmitting: boolean;
   onSubmit: (event: FormEvent<HTMLFormElement>) => Promise<void>;
+  onUsernameChange: (nextUsername: string) => void;
   onPasswordChange: (nextPassword: string) => void;
 }
 
@@ -20,19 +22,6 @@ function getSafeNextPath(nextPath: string | null): string {
     return '/';
   }
   return nextPath;
-}
-
-async function submitPassword(password: string): Promise<string | null> {
-  const response = await fetch('/api/auth/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ password }),
-  });
-  const payload = (await response.json()) as LoginApiResponse;
-  if (response.ok) {
-    return null;
-  }
-  return payload.error ?? '登录失败';
 }
 
 function LoginShell({ children }: { children: ReactNode }) {
@@ -45,19 +34,47 @@ function LoginShell({ children }: { children: ReactNode }) {
   );
 }
 
-function LoginPanel({ password, error, isSubmitting, onSubmit, onPasswordChange }: LoginPanelProps) {
+async function submitLogin(username: string, password: string): Promise<string | null> {
+  const response = await fetch('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  });
+  const payload = (await response.json()) as LoginApiResponse;
+  if (response.ok) {
+    return null;
+  }
+  return payload.error ?? '登录失败';
+}
+
+function LoginPanel({
+  username,
+  password,
+  error,
+  isSubmitting,
+  onSubmit,
+  onUsernameChange,
+  onPasswordChange,
+}: LoginPanelProps) {
   return (
     <>
       <h1 className="font-serif text-2xl text-[#3A3731] mb-2">拾光 14</h1>
-      <p className="text-sm text-[#7A7772] mb-6">请输入访问密码</p>
+      <p className="text-sm text-[#7A7772] mb-6">请输入账号密码</p>
       <form onSubmit={onSubmit} className="space-y-4">
+        <input
+          type="text"
+          value={username}
+          onChange={(event) => onUsernameChange(event.target.value)}
+          className="w-full rounded-md border border-[#D9D5CD] bg-white px-3 py-2 text-sm text-[#3A3731] outline-none focus:border-[#BFB9AF]"
+          placeholder="用户名"
+          autoFocus
+        />
         <input
           type="password"
           value={password}
           onChange={(event) => onPasswordChange(event.target.value)}
           className="w-full rounded-md border border-[#D9D5CD] bg-white px-3 py-2 text-sm text-[#3A3731] outline-none focus:border-[#BFB9AF]"
           placeholder="密码"
-          autoFocus
         />
         {error && <p className="text-xs text-red-600">{error}</p>}
         <button
@@ -76,6 +93,7 @@ function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = useMemo(() => getSafeNextPath(searchParams.get('next')), [searchParams]);
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -89,7 +107,7 @@ function LoginContent() {
     setIsSubmitting(true);
     setError(null);
     try {
-      const submitError = await submitPassword(password);
+      const submitError = await submitLogin(username.trim(), password);
       if (submitError) {
         setError(submitError);
         return;
@@ -107,10 +125,12 @@ function LoginContent() {
   return (
     <LoginShell>
       <LoginPanel
+        username={username}
         password={password}
         error={error}
         isSubmitting={isSubmitting}
         onSubmit={handleSubmit}
+        onUsernameChange={setUsername}
         onPasswordChange={setPassword}
       />
     </LoginShell>

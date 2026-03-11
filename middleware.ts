@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   AUTH_COOKIE_NAME,
+  AUTH_USER_COOKIE_NAME,
   PASSWORD_ENV_NAME,
+  USERS_ENV_NAME,
   constantTimeEqual,
-  createExpectedAuthToken,
+  createMultiUserAuthToken,
+  createSingleAuthToken,
+  readAuthConfig,
 } from '@/lib/auth';
 
 const LOGIN_PAGE_PATH = '/login';
@@ -26,7 +30,7 @@ function toErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     return error.message;
   }
-  return `Missing required environment variable: ${PASSWORD_ENV_NAME}`;
+  return `Missing required environment variable: ${USERS_ENV_NAME} or ${PASSWORD_ENV_NAME}`;
 }
 
 function buildLoginUrl(request: NextRequest): URL {
@@ -43,7 +47,22 @@ async function hasValidAuthToken(request: NextRequest): Promise<boolean> {
   if (!cookieToken) {
     return false;
   }
-  const expectedToken = await createExpectedAuthToken();
+
+  const config = readAuthConfig();
+  if (config.mode === 'single') {
+    const expectedToken = await createSingleAuthToken(config.password);
+    return constantTimeEqual(cookieToken, expectedToken);
+  }
+
+  const username = request.cookies.get(AUTH_USER_COOKIE_NAME)?.value;
+  if (!username) {
+    return false;
+  }
+  const password = config.users.get(username);
+  if (!password) {
+    return false;
+  }
+  const expectedToken = await createMultiUserAuthToken(username, password);
   return constantTimeEqual(cookieToken, expectedToken);
 }
 

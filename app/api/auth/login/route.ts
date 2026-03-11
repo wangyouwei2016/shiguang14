@@ -2,11 +2,15 @@ import { NextResponse } from 'next/server';
 import {
   AUTH_COOKIE_MAX_AGE_SECONDS,
   AUTH_COOKIE_NAME,
-  createExpectedAuthToken,
-  isPasswordValid,
+  AUTH_USER_COOKIE_NAME,
+  constantTimeEqual,
+  createMultiUserAuthToken,
+  createSingleAuthToken,
+  readAuthConfig,
 } from '@/lib/auth';
 
 interface LoginPayload {
+  username?: unknown;
   password?: unknown;
 }
 
@@ -15,6 +19,7 @@ interface LoginResponse {
 }
 
 interface ValidLoginPayload {
+  username?: string;
   password: string;
 }
 
@@ -39,15 +44,61 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!(await isPasswordValid(payload.password))) {
-      return NextResponse.json<LoginResponse>({ error: '密码错误' }, { status: 401 });
+    const config = readAuthConfig();
+    const inputUsername = typeof payload.username === 'string' ? payload.username.trim() : '';
+    const inputPassword = payload.password;
+
+    if (config.mode === 'single') {
+      if (!constantTimeEqual(inputPassword, config.password)) {
+        return NextResponse.json<LoginResponse>({ error: '密码错误' }, { status: 401 });
+      }
+
+      const token = await createSingleAuthToken(config.password);
+      const response = NextResponse.json({ ok: true }, { status: 200 });
+      response.cookies.set({
+        name: AUTH_COOKIE_NAME,
+        value: token,
+        httpOnly: true,
+        sameSite: 'strict',
+        secure: process.env.NODE_ENV === 'production',
+        path: '/',
+        maxAge: AUTH_COOKIE_MAX_AGE_SECONDS,
+      });
+      response.cookies.set({
+        name: AUTH_USER_COOKIE_NAME,
+        value: '',
+        httpOnly: true,
+        sameSite: 'strict',
+        secure: process.env.NODE_ENV === 'production',
+        path: '/',
+        maxAge: 0,
+      });
+      return response;
     }
 
-    const token = await createExpectedAuthToken();
+    if (!inputUsername) {
+      return NextResponse.json<LoginResponse>({ error: '多用户模式需要用户名' }, { status: 400 });
+    }
+
+    const expectedPassword = config.users.get(inputUsername);
+    if (!expectedPassword || !constantTimeEqual(inputPassword, expectedPassword)) {
+      return NextResponse.json<LoginResponse>({ error: '用户名或密码错误' }, { status: 401 });
+    }
+
+    const token = await createMultiUserAuthToken(inputUsername, expectedPassword);
     const response = NextResponse.json({ ok: true }, { status: 200 });
     response.cookies.set({
       name: AUTH_COOKIE_NAME,
       value: token,
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      maxAge: AUTH_COOKIE_MAX_AGE_SECONDS,
+    });
+    response.cookies.set({
+      name: AUTH_USER_COOKIE_NAME,
+      value: inputUsername,
       httpOnly: true,
       sameSite: 'strict',
       secure: process.env.NODE_ENV === 'production',

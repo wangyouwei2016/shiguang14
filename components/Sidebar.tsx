@@ -11,7 +11,7 @@ export default function Sidebar({ currentView, setCurrentView }: SidebarProps) {
   const navItems = [
     { id: 'today', label: '今日案头', icon: Sun },
     { id: 'focus', label: '14天行囊', icon: CalendarDays },
-    { id: 'idea', label: '灵感池', icon: Inbox },
+    { id: 'idea', label: '觉行三境', icon: Inbox },
     { id: 'history', label: '时光印记', icon: History },
   ] as const;
 

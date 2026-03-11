@@ -83,10 +83,13 @@ export default function GoalManager({
   return (
     <section className="space-y-5">
       <div className="flex items-center justify-between">
-        <h3 className="font-serif text-xl text-[#3A3731] tracking-[0.08em] flex items-center">
-          <Target size={18} strokeWidth={1.6} className="mr-2 text-[#7A8B76]" />
-          目标管理
-        </h3>
+        <div className="flex items-center gap-3 min-w-0">
+          <h3 className="font-serif text-xl text-[#3A3731] tracking-[0.08em] flex items-center">
+            <Target size={18} strokeWidth={1.6} className="mr-2 text-[#7A8B76]" />
+            问程
+          </h3>
+          <span className="text-[12px] text-[#7A7772] tracking-wide truncate">立志·知行合一</span>
+        </div>
       </div>
 
       <div className="bg-white/50 rounded-[12px] border border-[#3A3731]/5 p-5 space-y-3">

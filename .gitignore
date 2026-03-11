@@ -13,3 +13,5 @@ coverage/
 
 # Runtime data (mounted to /app/data in Docker)
 data/focus-cycle.json
+
+.worktrees/

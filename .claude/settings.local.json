@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add -A && git commit -m \"docs: update README and add planning documents\")"
+    ]
+  }
+}
